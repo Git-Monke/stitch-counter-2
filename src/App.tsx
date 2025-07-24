@@ -1,6 +1,8 @@
 import "./App.css";
 
 import { useSelectedProjectName } from "./hooks/useProjects";
+import { useFullscreen } from "./hooks/useFullscreen";
+import { useEffect } from "react";
 import { SidebarProvider } from "./components/ui/sidebar";
 import { AppSidebar } from "./components/AppSidebar";
 import { ArrowLeft } from "lucide-react";
@@ -10,11 +12,22 @@ import { CounterSettings } from "./components/CounterSettings";
 import { TimerSettings } from "./components/TimerSettings";
 import { StitchCounter } from "./components/StitchCounter/StitchCounter";
 import { Button } from "./components/ui/button";
+import { InstagramCredit } from "./components/InstagramCredit";
 
 const AppContent = () => {
   const projectName = useSelectedProjectName();
+  const isFullscreen = useFullscreen();
 
   const isPopup = window.opener != null;
+
+  // Set document title based on selected project
+  useEffect(() => {
+    if (projectName) {
+      document.title = `${projectName} - Loop Log!`;
+    } else {
+      document.title = "Loop Log!";
+    }
+  }, [projectName]);
 
   if (isPopup) {
     return (
@@ -44,21 +57,28 @@ const AppContent = () => {
             <h3 className="text-sm font-medium text-muted-foreground">
               Project Settings
             </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               <CounterSettings />
               <TimerSettings />
             </div>
-            <Button
-              onClick={() => {
-                window.open(
-                  window.location.href,
-                  "popup",
-                  "width=400,height=400,toolbar=no,location=no,status=no,menubar=no,scrollbars=no,resizable=no",
-                );
-              }}
-            >
-              Open Counter!
-            </Button>
+            <div className="flex flex-col gap-2">
+              <Button
+                onClick={() => {
+                  window.open(
+                    window.location.href,
+                    "popup",
+                    "width=400,height=400,toolbar=no,location=no,status=no,menubar=no,scrollbars=no,resizable=no"
+                  );
+                }}
+              >
+                Open Counter!
+              </Button>
+              {isFullscreen && (
+                <p className="text-sm text-muted-foreground">
+                  Note: While in fullscreen mode, the popup will open in a new tab instead of a popup window. You'll need to drag it out manually to create a separate window.
+                </p>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -71,6 +91,7 @@ function App() {
     <SidebarProvider>
       <AppSidebar />
       <AppContent />
+      <InstagramCredit />
     </SidebarProvider>
   );
 }

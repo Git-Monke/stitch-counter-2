@@ -4,7 +4,7 @@ import path from "path";
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
-  base: "/StitchCounter2/",
+  base: "/stitch-counter-2/",
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {

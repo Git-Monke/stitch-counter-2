@@ -13,7 +13,7 @@ import { SectionTimer } from "./SectionTimer";
 import { useEffect, useState } from "react";
 import { Button } from "../ui/button";
 import { Textarea } from "../ui/textarea";
-import { Settings, Trash } from "lucide-react";
+import { Pencil, Trash } from "lucide-react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -75,6 +75,42 @@ export const StitchCounter: React.FC = () => {
   const handleDeleteSection = () => {
     if (sectionId && projectId) {
       deleteSection(projectId, sectionId);
+    }
+  };
+
+  const handleSectionSwitch = (newSectionId: string) => {
+    // Save notes if currently editing
+    if (isEditingNotes) {
+      handleSaveNotes();
+    }
+    
+    // Switch to the new section
+    if (projectId) {
+      useProjects.getState().setSelectedSection(projectId, newSectionId);
+    }
+  };
+
+  const handleAddSection = () => {
+    // Save notes if currently editing
+    if (isEditingNotes) {
+      handleSaveNotes();
+    }
+    
+    // Add new section (which will auto-select it)
+    if (projectId) {
+      useProjects.getState().addSectionToProject(projectId);
+    }
+  };
+
+  const handleDeleteSectionFromSidebar = (sectionIdToDelete: string) => {
+    // Save notes if currently editing and it's the same section being deleted
+    if (isEditingNotes && sectionIdToDelete === sectionId) {
+      handleSaveNotes();
+    }
+    
+    // Delete the section
+    if (projectId) {
+      deleteSection(projectId, sectionIdToDelete);
     }
   };
 
@@ -151,7 +187,7 @@ export const StitchCounter: React.FC = () => {
 
   return (
     <div className="flex h-screen w-full">
-      <StitchCounterSidebar />
+      <StitchCounterSidebar onSectionSwitch={handleSectionSwitch} onAddSection={handleAddSection} onDeleteSection={handleDeleteSectionFromSidebar} />
       <div className="flex-1 p-4 flex flex-col">
         {/* Main stitch counter content goes here */}
         <div className="flex items-center gap-1 min-w-0 justify-between">
@@ -167,19 +203,20 @@ export const StitchCounter: React.FC = () => {
           </div>
           {sectionId && (
             <DropdownMenu>
-              <DropdownMenuTrigger>
-                <Settings className="w-5 h-5" />
+              <DropdownMenuTrigger className="h-8 flex items-center justify-center">
+                <Pencil className="w-4 h-4" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end" className="w-56">
                 <DropdownMenuItem onClick={() => setEditingSection(true)}>
-                  Rename Section
+                  <Pencil />
+                  Rename
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   variant="destructive"
                   onClick={handleDeleteSection}
                 >
-                  <Trash className="mr-2" />
-                  Delete Section
+                  <Trash />
+                  Delete
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

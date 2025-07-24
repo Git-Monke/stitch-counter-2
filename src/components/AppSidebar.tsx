@@ -13,16 +13,28 @@ import {
   useSidebar,
 } from "./ui/sidebar";
 import { Separator } from "./ui/separator";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, Trash2 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { ProjectSearch } from "./ProjectSearch";
 import { useState } from "react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "./ui/alert-dialog";
 
 const ONE_WEEK = 1000 * 60 * 60 * 24 * 7;
 
 const SidebarBullet = ({ projectID }: { projectID: string }) => {
   const { state } = useSidebar();
-  const { selectedProjectID, setSelectedProjectID } = useProjects();
+  const { selectedProjectID, setSelectedProjectID, deleteProject } = useProjects();
+  const [isHovered, setIsHovered] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
 
   const projectName = useProjects((state) => state.projects[projectID]?.name);
   const projectColor = useProjects((state) => state.projects[projectID]?.color);
@@ -37,26 +49,71 @@ const SidebarBullet = ({ projectID }: { projectID: string }) => {
           transition={{ duration: 0.2 }}
         >
           <SidebarMenuItem>
-            <SidebarMenuButton
-              asChild
-              onClick={() => {
-                setSelectedProjectID(projectID);
-              }}
-              className={
-                selectedProjectID == projectID ? `bg-sidebar-accent` : ``
-              }
+            <div
+              className="relative group"
+              onMouseEnter={() => setIsHovered(true)}
+              onMouseLeave={() => setIsHovered(false)}
             >
-              <div>
-                <div
-                  className="w-2 h-2 rounded-full"
-                  style={{
-                    backgroundColor: projectColor,
-                    border: "1px solid rgba(0, 0, 0, 0.1)",
-                  }}
-                />
-                <span>{projectName}</span>
-              </div>
-            </SidebarMenuButton>
+              <SidebarMenuButton
+                asChild
+                onClick={() => {
+                  setSelectedProjectID(projectID);
+                }}
+                className={
+                  selectedProjectID == projectID ? `bg-sidebar-accent` : ``
+                }
+              >
+                <div>
+                  <div
+                    className="w-2 h-2 rounded-full"
+                    style={{
+                      backgroundColor: projectColor,
+                      border: "1px solid rgba(0, 0, 0, 0.1)",
+                    }}
+                  />
+                  <span>{projectName}</span>
+                </div>
+              </SidebarMenuButton>
+              <AnimatePresence>
+                {isHovered && (
+                  <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+                    <AlertDialogTrigger asChild>
+                      <motion.button
+                        initial={{ opacity: 0, scale: 0.8 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.8 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-destructive hover:text-destructive-foreground text-muted-foreground transition-colors"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                        }}
+                      >
+                        <Trash2 size={14} />
+                      </motion.button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Delete Project</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Are you sure you want to delete "{projectName}"? This action cannot be undone.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction
+                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                          onClick={() => {
+                            deleteProject(projectID);
+                          }}
+                        >
+                          Delete
+                        </AlertDialogAction>
+                      </div>
+                    </AlertDialogContent>
+                  </AlertDialog>
+                )}
+              </AnimatePresence>
+            </div>
           </SidebarMenuItem>
         </motion.div>
       )}

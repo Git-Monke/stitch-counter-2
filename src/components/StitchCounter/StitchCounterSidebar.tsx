@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Sidebar,
   SidebarContent,
@@ -16,21 +16,114 @@ import { Separator } from "../ui/separator";
 import {
   useSelectedProject,
   useSelectedSectionID,
-  useProjects,
-  useSelectedProjectID,
 } from "../../hooks/useProjects";
-import { PlusIcon } from "lucide-react";
+import { PlusIcon, Trash2 } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "../ui/alert-dialog";
+
+const SectionItem = ({ 
+  sectionID, 
+  section, 
+  selectedSectionID, 
+  onSectionSwitch, 
+  onDeleteSection 
+}: { 
+  sectionID: string; 
+  section: { name: string }; 
+  selectedSectionID: string | null; 
+  onSectionSwitch: (sectionId: string) => void;
+  onDeleteSection: (sectionId: string) => void;
+}) => {
+  const { toggleSidebar } = useSidebar();
+  const [isHovered, setIsHovered] = useState(false);
+  const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
+
+  return (
+    <SidebarMenuItem>
+      <div
+        className="relative group"
+        onMouseEnter={() => setIsHovered(true)}
+        onMouseLeave={() => setIsHovered(false)}
+      >
+        <SidebarMenuButton
+          onClick={() => {
+            if (sectionID !== selectedSectionID) {
+              onSectionSwitch(sectionID);
+              toggleSidebar();
+            }
+          }}
+          className={
+            selectedSectionID === sectionID ? "bg-sidebar-accent" : ""
+          }
+        >
+          <span>{section.name}</span>
+        </SidebarMenuButton>
+        <AnimatePresence>
+          {isHovered && (
+            <AlertDialog open={isDeleteDialogOpen} onOpenChange={setIsDeleteDialogOpen}>
+              <AlertDialogTrigger asChild>
+                <motion.button
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  transition={{ duration: 0.15 }}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-destructive hover:text-destructive-foreground text-muted-foreground transition-colors"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                  }}
+                >
+                  <Trash2 size={14} />
+                </motion.button>
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Delete Section</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Are you sure you want to delete "{section.name}"? This action cannot be undone.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <div className="flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                  <AlertDialogAction
+                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                    onClick={() => {
+                      onDeleteSection(sectionID);
+                    }}
+                  >
+                    Delete
+                  </AlertDialogAction>
+                </div>
+              </AlertDialogContent>
+            </AlertDialog>
+          )}
+        </AnimatePresence>
+      </div>
+    </SidebarMenuItem>
+  );
+};
+
+interface StitchCounterSidebarProps {
+  onSectionSwitch: (sectionId: string) => void;
+  onAddSection: () => void;
+  onDeleteSection: (sectionId: string) => void;
+}
 
 /**
  * Sidebar for selecting sections within the StitchCounter popup.
  * Uses Zustand for state management and shadcn/ui for UI primitives.
  */
-export const StitchCounterSidebar: React.FC = () => {
+export const StitchCounterSidebar: React.FC<StitchCounterSidebarProps> = ({ onSectionSwitch, onAddSection, onDeleteSection }) => {
   const project = useSelectedProject();
-  const selectedProjectID = useSelectedProjectID();
   const selectedSectionID = useSelectedSectionID();
-  const setSelectedSection = useProjects((state) => state.setSelectedSection);
-  const addSectionToProject = useProjects((state) => state.addSectionToProject);
   const { toggleSidebar } = useSidebar();
 
   if (!project) {
@@ -56,26 +149,19 @@ export const StitchCounterSidebar: React.FC = () => {
           <SidebarGroupContent>
             <SidebarMenu>
               {sectionEntries.map(([sectionID, section]) => (
-                <SidebarMenuItem key={sectionID}>
-                  <SidebarMenuButton
-                    onClick={() => {
-                      if (sectionID !== selectedSectionID) {
-                        setSelectedSection(selectedProjectID, sectionID);
-                        toggleSidebar();
-                      }
-                    }}
-                    className={
-                      selectedSectionID === sectionID ? "bg-sidebar-accent" : ""
-                    }
-                  >
-                    <span>{section.name}</span>
-                  </SidebarMenuButton>
-                </SidebarMenuItem>
+                <SectionItem
+                  key={sectionID}
+                  sectionID={sectionID}
+                  section={section}
+                  selectedSectionID={selectedSectionID}
+                  onSectionSwitch={onSectionSwitch}
+                  onDeleteSection={onDeleteSection}
+                />
               ))}
               <SidebarMenuItem>
                 <SidebarMenuButton
                   onClick={() => {
-                    addSectionToProject(selectedProjectID);
+                    onAddSection();
                     toggleSidebar();
                   }}
                   className="flex items-center gap-2"

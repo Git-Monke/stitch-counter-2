@@ -14,14 +14,20 @@ import { Popover, PopoverContent, PopoverTrigger } from "./ui/popover";
 import { HexColorPicker } from "react-colorful";
 import { SidebarTrigger } from "./ui/sidebar";
 
-const ColorPickerPopover = () => {
+const ColorPickerPopover = ({
+  open,
+  onOpenChange,
+}: {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}) => {
   const { updateSelectedProject } = useProjects();
   const selectedColor = useProjects(
-    (state) => state.projects[state.selectedProjectID]?.color ?? "#000000",
+    (state) => state.projects[state.selectedProjectID]?.color ?? "#000000"
   );
 
   return (
-    <Popover modal>
+    <Popover modal open={open} onOpenChange={onOpenChange}>
       <PopoverTrigger asChild>
         <DropdownMenuItem
           onSelect={(e) => {
@@ -46,14 +52,20 @@ const ColorPickerPopover = () => {
 };
 
 export const AppHeader = () => {
-  const { renameProject, deleteProject, selectedProjectID } = useProjects();
+  const {
+    renameProject,
+    deleteProject,
+    selectedProjectID,
+    updateSelectedProject,
+  } = useProjects();
   const projectName = useSelectedProjectName();
   const projectColor = useProjects(
-    (state) => state.projects[state.selectedProjectID]?.color,
+    (state) => state.projects[state.selectedProjectID]?.color
   );
 
   const [renamingProject, setRenamingProject] = useState(false);
   const [newProjectName, setNewProjectName] = useState("");
+  const [colorPickerOpen, setColorPickerOpen] = useState(false);
 
   const exitRename = () => {
     setNewProjectName("");
@@ -83,89 +95,123 @@ export const AppHeader = () => {
             <div className="md:hidden mr-3">
               <SidebarTrigger />
             </div>
-            {!renamingProject && (
-              <div className="flex items-center">
-                <div
-                  className="w-3 h-3 rounded-full mr-3"
-                  style={{
-                    backgroundColor: projectColor,
-                  }}
-                />
-                <span className="mr-2">
-                  {projectName || "No project selected"}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {renamingProject && (
-            <div className="flex gap-2 items-center">
-              <Input
-                placeholder="New name..."
-                onBlur={exitRename}
-                autoFocus={true}
-                onKeyDown={(e) => {
-                  if (e.nativeEvent.key == "Enter") {
-                    handleRename();
-                  }
-                }}
-                value={newProjectName}
-                onChange={(e) => {
-                  setNewProjectName(e.target.value);
-                }}
-              />
-
-              <Button
-                className={`${!nameIsValid(newProjectName) && "opacity-50"}`}
-                disabled={!nameIsValid(newProjectName)}
-                onMouseDown={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-
-                  handleRename();
-                }}
+            <div className="flex items-center h-10">
+              <Popover
+                open={colorPickerOpen && !renamingProject}
+                onOpenChange={setColorPickerOpen}
               >
-                <Check></Check>
-              </Button>
-
-              <Button variant="destructive" onClick={exitRename}>
-                <X></X>
-              </Button>
-            </div>
-          )}
-
-          {!renamingProject && (
-            <DropdownMenu>
-              <DropdownMenuTrigger>
-                <Settings className="w-5 h-5" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-56">
-                {/* Rename */}
-                <DropdownMenuItem
+                <PopoverTrigger asChild>
+                  <div
+                    className={`w-3 h-3 rounded-full mr-3 transition-transform ${
+                      !renamingProject
+                        ? "cursor-pointer hover:scale-110"
+                        : "cursor-default"
+                    }`}
+                    style={{
+                      backgroundColor: projectColor,
+                    }}
+                    onClick={() => {
+                      if (!renamingProject) {
+                        setColorPickerOpen(true);
+                      }
+                    }}
+                  />
+                </PopoverTrigger>
+                <PopoverContent className="flex">
+                  <HexColorPicker
+                    color={projectColor || "#000000"}
+                    onChange={(newHex) => {
+                      updateSelectedProject("color", () => newHex);
+                    }}
+                    className="flex-1"
+                  />
+                </PopoverContent>
+              </Popover>
+              {!renamingProject && (
+                <span
+                  className="mr-2 cursor-pointer hover:opacity-80 transition-opacity"
                   onClick={() => {
+                    setNewProjectName(projectName || "");
                     setRenamingProject(true);
                   }}
                 >
-                  <Pencil></Pencil>
-                  Rename
-                </DropdownMenuItem>
+                  {projectName || "No project selected"}
+                </span>
+              )}
+              {renamingProject && (
+                <div className="flex gap-2 items-center">
+                  <Input
+                    placeholder="New name..."
+                    onBlur={exitRename}
+                    autoFocus={true}
+                    onKeyDown={(e) => {
+                      if (e.nativeEvent.key == "Enter") {
+                        handleRename();
+                      }
+                    }}
+                    value={newProjectName}
+                    onChange={(e) => {
+                      setNewProjectName(e.target.value);
+                    }}
+                    className="h-8"
+                  />
+                  <Button
+                    size="sm"
+                    className={`${
+                      !nameIsValid(newProjectName) && "opacity-50"
+                    }`}
+                    disabled={!nameIsValid(newProjectName)}
+                    onMouseDown={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleRename();
+                    }}
+                  >
+                    <Check size={16} />
+                  </Button>
+                  <Button size="sm" variant="destructive" onClick={exitRename}>
+                    <X size={16} />
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
 
-                {/* Change Color */}
-                <ColorPickerPopover />
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              className={`h-10 flex items-center justify-center ${
+                renamingProject ? "opacity-50 cursor-default" : ""
+              }`}
+              disabled={renamingProject}
+            >
+              <Pencil className="w-4 h-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              {/* Rename */}
+              <DropdownMenuItem
+                onClick={() => {
+                  setRenamingProject(true);
+                }}
+              >
+                <Pencil></Pencil>
+                Rename
+              </DropdownMenuItem>
 
-                {/* Delete */}
-                <DropdownMenuItem
-                  variant="destructive"
-                  onClick={() => {
-                    deleteProject(selectedProjectID);
-                  }}
-                >
-                  <Trash></Trash>
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          )}
+              {/* Change Color */}
+              <ColorPickerPopover />
+
+              {/* Delete */}
+              <DropdownMenuItem
+                variant="destructive"
+                onClick={() => {
+                  deleteProject(selectedProjectID);
+                }}
+              >
+                <Trash></Trash>
+                Delete
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       )}
     </>

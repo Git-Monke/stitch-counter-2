@@ -145,7 +145,15 @@ export const StitchCounterSectionTitle: React.FC<
         </>
       ) : (
         <>
-          <span className="truncate">{sectionName}</span>
+          <span 
+            className="truncate cursor-pointer hover:opacity-80 transition-opacity"
+            onClick={() => {
+              setInputValue(sectionName);
+              setEditing(true);
+            }}
+          >
+            {sectionName}
+          </span>
         </>
       )}
     </div>

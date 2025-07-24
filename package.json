@@ -10,7 +10,9 @@
     "preview": "vite preview",
     "deploy": "gh-pages -d dist -o upstream"
   },
+  "homepage": "https://git-monke.github.io/stitch-counter-2/",
   "dependencies": {
+    "@radix-ui/react-alert-dialog": "^1.1.14",
     "@radix-ui/react-dialog": "^1.1.14",
     "@radix-ui/react-dropdown-menu": "^2.1.15",
     "@radix-ui/react-label": "^2.1.7",

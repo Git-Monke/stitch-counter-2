@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { subscribeWithSelector, persist } from "zustand/middleware";
-import { exampleProjects, templateProject } from "./projectTemplates";
+import { templateProject } from "./projectTemplates";
 
 interface StitchTypes {
   stitches: number;
@@ -55,14 +55,14 @@ interface ProjectStore {
   renameProject: (projectID: string, newName: string) => void;
   updateSelectedProject: <K extends keyof Project>(
     key: K,
-    updateFunc: (data: Project[K]) => Project[K],
+    updateFunc: (data: Project[K]) => Project[K]
   ) => void;
   setSelectedSection: (projectID: string, sectionID: string) => void;
   addSectionToProject: (projectID: string) => void;
   renameSection: (
     projectID: string,
     sectionID: string,
-    newName: string,
+    newName: string
   ) => void;
   deleteSection: (projectID: string, sectionID: string) => void;
 }
@@ -74,7 +74,7 @@ export const useProjects = create<ProjectStore>()(
     persist(
       (set) => ({
         // Initial state
-        projects: exampleProjects,
+        projects: {},
         selectedProjectID: "",
 
         // Actions
@@ -98,6 +98,7 @@ export const useProjects = create<ProjectStore>()(
         createNewProject: () => {
           const projectID = randomID();
           const newProject: Project = { ...templateProject };
+          newProject.lastModified = Date.now();
 
           // Pick the first section as default selected, if any
           const firstSectionID = Object.keys(newProject.data.sections)[0] || "";
@@ -269,9 +270,9 @@ export const useProjects = create<ProjectStore>()(
           projects: state.projects,
           selectedProjectID: state.selectedProjectID,
         }),
-      },
-    ),
-  ),
+      }
+    )
+  )
 );
 
 // --- Cross-window sync: listen for storage and message events and rehydrate store ---
@@ -300,7 +301,7 @@ export const useSelectedProjectID = () =>
 export const useSelectedSectionID = () =>
   useProjects(
     (state) =>
-      state.projects[state.selectedProjectID]?.selectedSectionID || null,
+      state.projects[state.selectedProjectID]?.selectedSectionID || null
   );
 
 export const createSelectedProjectSelector =
@@ -311,11 +312,11 @@ export const createSelectedProjectSelector =
 // Common selectors
 export const useSelectedProjectOption = <K extends keyof Project["options"]>(
   optionType: K,
-  prop: keyof Project["options"][K],
+  prop: keyof Project["options"][K]
 ) => {
   return useProjects(
     (state) =>
-      state.projects[state.selectedProjectID]?.options[optionType][prop],
+      state.projects[state.selectedProjectID]?.options[optionType][prop]
   );
 };
 
